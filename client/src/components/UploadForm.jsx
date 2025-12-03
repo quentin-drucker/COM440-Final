@@ -1,19 +1,26 @@
-import React, { useState, useEffect, } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 function UploadForm({ username, targetLabel, roundKey }) {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
-  
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     // New round started -> clear any previous "You won" message and file
     setMessage("");
     setFile(null);
+    // Also clear the actual <input type="file"> so the UI matches state
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }, [roundKey]);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!file) return;
-
+    if (!file) {
+      setMessage("Please choose a photo before submitting.");
+      return;
+    }
     setMessage("Uploading...");
 
     const formData = new FormData();
@@ -51,6 +58,7 @@ function UploadForm({ username, targetLabel, roundKey }) {
   return (
     <form onSubmit={handleSubmit} className="upload-form">
       <input
+        ref={fileInputRef}
         type="file"
         accept="image/*"
         onChange={(e) => setFile(e.target.files[0] || null)}

@@ -55,6 +55,29 @@ let currentItem = null;
 let currentRoundId = 0;
 let roundStartTime = null; // ms timestamp
 let roundActive = false;
+// track which users are currently online (socket.id -> username)
+const onlineUsers = new Map();
+
+let lastOnlineCount = 0;
+function broadcastOnlineUsers() {
+  const users = Array.from(new Set(onlineUsers.values()));
+  io.emit("onlineUsers", users);
+
+  const newCount = users.length;
+
+  // If we just went from 0 players online -> at least 1 player online,
+  // reset the round's start time so the timer effectively "starts" when someone is actually here.
+  if (lastOnlineCount === 0 && newCount > 0) {
+    if (roundActive) {
+      roundStartTime = Date.now();
+      console.log("First player joined, resetting roundStartTime");
+    }
+  }
+
+  lastOnlineCount = newCount;
+}
+
+
 
 function startNewRound() {
   currentItem = getRandomItem();
@@ -240,8 +263,16 @@ async function checkImageWithAzure(imagePath, targetLabel) {
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
+  // Client tells us which username this socket belongs to
+  socket.on("registerUser", (username) => {
+    onlineUsers.set(socket.id, username);
+    broadcastOnlineUsers();
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
+    onlineUsers.delete(socket.id);
+    broadcastOnlineUsers();
   });
 });
 

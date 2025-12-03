@@ -31,7 +31,7 @@ function LoginPage({ onLogin }) {
 
   return (
     <div className="page login-page">
-      <h1>Office Scavenger Hunt</h1>
+      <h1>Scavenger Hunt: Office Supplies Edition</h1>
       <form onSubmit={handleSubmit} className="card">
         <label>
           Username

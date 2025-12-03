@@ -13,6 +13,7 @@ function GamePage({ user }) {
   const [roundStatus, setRoundStatus] = useState("Loading round...");
   const [roundActive, setRoundActive] = useState(false);
   const [roundKey, setRoundKey] = useState(0); // used to reset UploadForm each round
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
   async function fetchInitialData() {
     const [itemRes, boardRes] = await Promise.all([
@@ -32,6 +33,12 @@ function GamePage({ user }) {
 
   useEffect(() => {
     fetchInitialData();
+
+    socket.emit("registerUser", user);
+    
+    socket.on("onlineUsers", (users) => {
+      setOnlineUsers(users);
+    });
 
     socket.on("leaderboardUpdated", (board) => {
       setLeaderboard(board);
@@ -68,6 +75,7 @@ function GamePage({ user }) {
       socket.off("leaderboardUpdated");
       socket.off("roundStarted");
       socket.off("roundEnded");
+      socket.off("onlineUsers");
     };
   }, []);
 
@@ -128,6 +136,19 @@ function GamePage({ user }) {
             targetLabel={currentItem.label}
             roundKey={roundKey}
           />
+        )}
+      </section>
+
+      <section className="card">
+        <h2>Players Online</h2>
+        {onlineUsers.length === 0 ? (
+          <p>No one else is online yet.</p>
+        ) : (
+          <ul>
+            {onlineUsers.map((name) => (
+              <li key={name}>{name}</li>
+            ))}
+          </ul>
         )}
       </section>
 
