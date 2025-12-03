@@ -1,14 +1,26 @@
 [
   {
     "username": "quentin",
-    "score": 10
+    "score": 19
   },
   {
     "username": "definitely_not_quentin",
-    "score": 2
+    "score": 5
   },
   {
     "username": "could_possibly_be_quentin",
     "score": 1
+  },
+  {
+    "username": "different_quentin",
+    "score": 2
+  },
+  {
+    "username": "quentin?",
+    "score": 1
+  },
+  {
+    "username": "señor quentín",
+    "score": 8
   }
 ]

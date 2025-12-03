@@ -107,41 +107,75 @@ const upload = multer({
   dest: path.join(__dirname, "uploads")
 });
 
-// This will later call Azure Vision; for now it's a stub.
+// This will later call Azure Vision resource (to check user's uploaded image of current item)
 app.post("/api/upload", upload.single("image"), async (req, res) => {
   try {
     const username = req.body.username;
     const targetLabel = req.body.targetLabel;
     const imagePath = req.file.path;
 
-    const isCorrect = await checkImageWithAzure(imagePath, targetLabel);
+    console.log("Upload from", username, {
+      targetLabel,
+      roundActive,
+      currentRoundId
+    });
 
-    if (isCorrect) {
-      const board = incrementScore(username);
-      currentItem = getRandomItem();
-
-      io.emit("leaderboardUpdated", board);
-      io.emit("newTarget", currentItem);
-
+    // If round is not active, don't let anyone win
+    if (!roundActive) {
       return res.json({
         success: true,
-        matched: true,
-        nextItem: currentItem
+        matched: false,
+        reason: "round_not_active"
       });
-    } else {
+    }
+
+    const isCorrect = await checkImageWithAzure(imagePath, targetLabel);
+
+    if (!isCorrect) {
+      // Still in the round, just incorrect guess
       return res.json({ success: true, matched: false });
     }
+
+    // If we reach here, we got a correct answer while roundActive === true.
+    // This player wins the round.
+    roundActive = false;
+    const endTime = Date.now();
+    const durationMs = endTime - roundStartTime;
+
+    const board = incrementScore(username);
+
+    // Update all clients' leaderboard
+    io.emit("leaderboardUpdated", board);
+
+    // Announce the winner of this round
+    io.emit("roundEnded", {
+      winner: username,
+      item: currentItem,
+      durationMs,
+      leaderboard: board,
+      roundId: currentRoundId
+    });
+
+    // Start a new round after a short intermission (10 seconds)
+    setTimeout(() => {
+      console.log("10s intermission over, starting new round");
+      startNewRound();
+    }, 10000); // 10,000 ms = 10 sec
+
+
+    return res.json({
+      success: true,
+      matched: true,
+      winner: username,
+      durationMs
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Upload failed" });
   }
 });
 
-// // TEMP: always false until add Azure Vision
-// async function checkImageWithAzure(imagePath, targetLabel) {
-//   console.log("Stub Vision check:", imagePath, "target:", targetLabel);
-//   return false; // change later after wiring Azure
-// }
+
 async function checkImageWithAzure(imagePath, targetLabel) {
   const endpoint = (process.env.AZURE_VISION_ENDPOINT || "").replace(/\/+$/, "");
   const key = process.env.AZURE_VISION_KEY;
@@ -213,4 +247,5 @@ io.on("connection", (socket) => {
 
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
+  startNewRound(); // start the first round when server boots
 });

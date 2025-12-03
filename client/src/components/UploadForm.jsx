@@ -1,8 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, } from "react";
 
-function UploadForm({ username, targetLabel }) {
+function UploadForm({ username, targetLabel, roundKey }) {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
+  
+  useEffect(() => {
+    // New round started -> clear any previous "You won" message and file
+    setMessage("");
+    setFile(null);
+  }, [roundKey]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -23,8 +29,16 @@ function UploadForm({ username, targetLabel }) {
 
       const data = await res.json();
 
-      if (data.matched) {
-        setMessage("Correct! New item selected 🎉");
+      if (data.reason === "round_not_active") {
+        setMessage(
+          "This round already finished — wait for the next item!"
+        );
+      } else if (data.matched) {
+        // This client was the winner (server sends winner + time)
+        const sec = data.durationMs
+          ? (data.durationMs / 1000).toFixed(2)
+          : "?";
+        setMessage(`Correct! You won this round in ${sec}s 🎉`);
       } else {
         setMessage("Not quite... try another photo.");
       }
