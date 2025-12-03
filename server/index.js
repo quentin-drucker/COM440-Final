@@ -7,6 +7,7 @@ const dotenv = require("dotenv");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const fetch = require("node-fetch");
 
 const { ITEMS, getRandomItem } = require("./items");
 
@@ -49,8 +50,28 @@ function incrementScore(username) {
   return board;
 }
 
-// current scavenger target (for now, global)
-let currentItem = getRandomItem();
+// current scavenger target + round state
+let currentItem = null;
+let currentRoundId = 0;
+let roundStartTime = null; // ms timestamp
+let roundActive = false;
+
+function startNewRound() {
+  currentItem = getRandomItem();
+  currentRoundId += 1;
+  roundStartTime = Date.now();
+  roundActive = true;
+
+  const payload = {
+    item: currentItem,
+    roundId: currentRoundId,
+    startedAt: roundStartTime
+  };
+
+  console.log("Starting new round:", payload);
+  io.emit("roundStarted", payload);
+}
+
 
 // ----- Routes -----
 
@@ -66,8 +87,14 @@ app.post("/api/login", (req, res) => {
 });
 
 app.get("/api/current-item", (req, res) => {
-  res.json(currentItem);
+  res.json({
+    item: currentItem,
+    roundId: currentRoundId,
+    startedAt: roundStartTime,
+    active: roundActive
+  });
 });
+
 
 app.get("/api/leaderboard", (req, res) => {
   const board = readLeaderboard();
@@ -110,11 +137,70 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
   }
 });
 
-// TEMP: always false until we add Azure Vision
+// // TEMP: always false until add Azure Vision
+// async function checkImageWithAzure(imagePath, targetLabel) {
+//   console.log("Stub Vision check:", imagePath, "target:", targetLabel);
+//   return false; // change later after wiring Azure
+// }
 async function checkImageWithAzure(imagePath, targetLabel) {
-  console.log("Stub Vision check:", imagePath, "target:", targetLabel);
-  return false; // change later after wiring Azure
+  const endpoint = (process.env.AZURE_VISION_ENDPOINT || "").replace(/\/+$/, "");
+  const key = process.env.AZURE_VISION_KEY;
+
+  if (!endpoint || !key) {
+    console.error("Azure Vision not configured (endpoint/key missing)");
+    return false;
+  }
+
+  // Using Computer Vision v3.2 "analyze" endpoint with Tags
+  const url = `${endpoint}/vision/v3.2/analyze?visualFeatures=Tags`;
+
+  const imageData = fs.readFileSync(imagePath);
+
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Ocp-Apim-Subscription-Key": key,
+        "Content-Type": "application/octet-stream"
+      },
+      body: imageData
+    });
+  } catch (err) {
+    console.error("Error calling Azure Vision:", err);
+    return false;
+  }
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Azure Vision HTTP error:", res.status, text);
+    return false;
+  }
+
+  const data = await res.json();
+
+  // data.tags looks like: [{ name: "stapler", confidence: 0.93 }, ...]
+  const lowerTarget = targetLabel.toLowerCase();
+
+  console.log("Azure Vision tags:", data.tags);
+
+  // simple fuzzy match: exact or substring, with a confidence threshold
+  const match = data.tags.find((tag) => {
+    const name = tag.name.toLowerCase();
+    const conf = tag.confidence;
+    return (
+      conf >= 0.6 && // can tweak this
+      (name === lowerTarget ||
+        name.includes(lowerTarget) ||
+        lowerTarget.includes(name))
+    );
+  });
+
+  console.log("Matched target?", !!match, "for label", targetLabel);
+
+  return !!match;
 }
+
 
 // ----- Socket.io -----
 io.on("connection", (socket) => {

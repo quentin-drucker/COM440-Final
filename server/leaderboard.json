@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "username": "quentin",
+    "score": 10
+  },
+  {
+    "username": "definitely_not_quentin",
+    "score": 2
+  },
+  {
+    "username": "could_possibly_be_quentin",
+    "score": 1
+  }
+]
