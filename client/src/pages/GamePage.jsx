@@ -14,6 +14,7 @@ function GamePage({ user }) {
   const [roundActive, setRoundActive] = useState(false);
   const [roundKey, setRoundKey] = useState(0); // used to reset UploadForm each round
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [skipStatus, setSkipStatus] = useState({ votes: 0, needed: 0 });
 
   async function fetchInitialData() {
     const [itemRes, boardRes] = await Promise.all([
@@ -30,6 +31,13 @@ function GamePage({ user }) {
     setRoundStatus(itemData.active ? "Round in progress" : "Brief Intermission");
     setRoundKey(itemData.roundId || 1);
   }
+
+  function handleSkipClick() {
+    // Only allow skip votes while the round is active
+    if (!roundActive) return;
+    socket.emit("voteSkip");
+  }
+
 
   useEffect(() => {
     fetchInitialData();
@@ -71,11 +79,26 @@ function GamePage({ user }) {
       setRoundStatus("Brief Intermission");
     });
 
+    socket.on("skipStatus", (status) => {
+      setSkipStatus(status);
+    });
+
+    socket.on("roundSkipped", (payload) => {
+      // This round is no longer running
+      setRoundActive(false);
+
+      // Briefly show that the item was skipped, new round will be announced by 'roundStarted' right after.
+      setWinnerInfo(null);
+      setRoundStatus("Item skipped by all players");
+    });
+    
     return () => {
       socket.off("leaderboardUpdated");
       socket.off("roundStarted");
       socket.off("roundEnded");
       socket.off("onlineUsers");
+      socket.off("skipStatus");
+      socket.off("roundSkipped");
     };
   }, []);
 
@@ -91,7 +114,6 @@ function GamePage({ user }) {
 
     return () => clearInterval(interval);
   }, [roundStartTime, roundActive]);
-
 
   return (
     <div className="page game-page">
@@ -137,6 +159,21 @@ function GamePage({ user }) {
             roundKey={roundKey}
           />
         )}
+      </section>
+
+      <section className="card">
+        <h2>Don&apos;t like this item?</h2>
+        <button
+          type="button"
+          onClick={handleSkipClick}
+          disabled={!roundActive || onlineUsers.length === 0}
+        >
+          Vote to skip this item
+        </button>
+        <p>
+          Skip votes: <strong>{skipStatus.votes}</strong> /{" "}
+          <strong>{skipStatus.needed}</strong>
+        </p>
       </section>
 
       <section className="card">

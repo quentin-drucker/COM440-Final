@@ -55,18 +55,25 @@ let currentItem = null;
 let currentRoundId = 0;
 let roundStartTime = null; // ms timestamp
 let roundActive = false;
+
 // track which users are currently online (socket.id -> username)
 const onlineUsers = new Map();
+
+// users who have voted to skip the current item (by username)
+const skipVotes = new Set();
 
 let lastOnlineCount = 0;
 function broadcastOnlineUsers() {
   const users = Array.from(new Set(onlineUsers.values()));
   io.emit("onlineUsers", users);
+  // also broadcast current skip status
+    io.emit("skipStatus", {
+      votes: skipVotes.size,
+      needed: users.length
+    });
 
   const newCount = users.length;
-
-  // If we just went from 0 players online -> at least 1 player online,
-  // reset the round's start time so the timer effectively "starts" when someone is actually here.
+  // Timer reset logic   (If we just went from 0 players online -> at least 1 player online, reset the round's start time so the timer effectively "starts" when someone is actually here.)
   if (lastOnlineCount === 0 && newCount > 0) {
     if (roundActive) {
       roundStartTime = Date.now();
@@ -84,6 +91,14 @@ function startNewRound() {
   currentRoundId += 1;
   roundStartTime = Date.now();
   roundActive = true;
+  skipVotes.clear(); // reset skip votes for the new item
+
+  // reset the skip status for all clients
+  const users = Array.from(new Set(onlineUsers.values()));
+  io.emit("skipStatus", {
+    votes: skipVotes.size, // 0 after clear()
+    needed: users.length
+  });
 
   const payload = {
     item: currentItem,
@@ -154,8 +169,13 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
 
     const isCorrect = await checkImageWithAzure(imagePath, targetLabel);
 
+    // delete uploaded file immediately after analysis
+    fs.unlink(imagePath, (err) => {
+      if (err) console.error("⚠️ Failed to delete uploaded file:", err);
+    });
+
+    // if incorrect guess, round still going
     if (!isCorrect) {
-      // Still in the round, just incorrect guess
       return res.json({ success: true, matched: false });
     }
 
@@ -267,6 +287,38 @@ io.on("connection", (socket) => {
   socket.on("registerUser", (username) => {
     onlineUsers.set(socket.id, username);
     broadcastOnlineUsers();
+  });
+
+  socket.on("voteSkip", () => {
+    const username = onlineUsers.get(socket.id);
+    if (!username) return;
+
+    // track that this user voted to skip
+    skipVotes.add(username);
+
+    const users = Array.from(new Set(onlineUsers.values()));
+    const votes = skipVotes.size;
+    const needed = users.length;
+
+    // broadcast updated skip progress to everyone
+    io.emit("skipStatus", { votes, needed });
+
+    // if everyone online has voted to skip, and round is active, skip the item
+    if (roundActive && needed > 0 && votes >= needed) {
+      console.log("All players voted to skip, starting new round");
+      roundActive = false;
+
+      // announce the skip, as a brief status message
+      io.emit("roundSkipped", {
+        item: currentItem,
+        roundId: currentRoundId
+      });
+
+      // Give clients ~3 seconds to read "Item skipped..." before new round
+      setTimeout(() => {
+        startNewRound();
+      }, 3000);
+    }
   });
 
   socket.on("disconnect", () => {
