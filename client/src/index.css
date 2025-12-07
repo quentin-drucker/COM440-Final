@@ -1,68 +1,575 @@
+/* ---------- Theme variables ---------- */
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --card-bg: rgba(5, 5, 7, 0.25);      /* low-opacity dark glass */
+  --card-border: rgba(255, 255, 255, 0.14);
+  --accent: #f5c06b;
+  --accent-soft: rgba(245, 192, 107, 0.18);
+  --text-main: #f5f5f5;
+  --text-muted: #a9a9b2;
+  --danger: #ff6b6b;
+  --radius-lg: 18px;
+  --radius-sm: 10px;
+  --shadow-strong: 0 22px 45px rgba(0, 0, 0, 0.8);
+  --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.6);
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* ---------- Global + background ---------- */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
+  font-size: 16px;
+
+  /* main background image – update filename if needed */
+  background:
+    url("/background-environment.jpg") center / cover fixed no-repeat,
+    rgba(0, 0, 0, 0.8);
+  background-color: #020203; /* no white edges ever */
+
+  color: var(--text-main);
+}
+
+#root {
   min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+/* ---------- Page wrapper ---------- */
+
+.page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1000px;
+  margin: 1.8rem auto;
+}
+
+/* ---------- Typography ---------- */
+
+h1,
+h2 {
+  margin: 0 0 0.55rem;
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: 2.3rem;
+  letter-spacing: 0.02em;
 }
+
+h2 {
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+p {
+  margin: 0.15rem 0;
+}
+
+strong {
+  font-weight: 600;
+}
+
+/* ---------- Buttons ---------- */
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  border-radius: 999px;
+  padding: 0.55rem 1.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 0.95rem;
+  background: linear-gradient(135deg, #fdf4e3, #f4d79e);
+  color: #2b2412;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7);
+  filter: brightness(1.04);
+}
+
+button:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+}
+
+/* ---------- GamePage Button Overrides (Submit + Skip) ---------- */
+
+/* Upload Photo → green */
+.game-page section.card:nth-of-type(2) button {
+  background: linear-gradient(135deg, #4be37f, #2fb85d);
+  color: #0c1a10;
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.45);
+}
+
+.game-page section.card:nth-of-type(2) button:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.game-page section.card:nth-of-type(2) button:active {
+  transform: translateY(1px);
+}
+
+/* Skip Item → red */
+.game-page section.card:nth-of-type(3) button {
+  background: linear-gradient(135deg, #ff7474, #d82929);
+  color: #2b0000;
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.45);
+}
+
+.game-page section.card:nth-of-type(3) button:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.game-page section.card:nth-of-type(3) button:active {
+  transform: translateY(1px);
+}
+
+/* ---------- Frosted glass cards (no texture) ---------- */
+
+.card {
+  padding: 0.85rem 1.15rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-soft);
+
+  background: var(--card-bg);
+  backdrop-filter: blur(18px);
+
+  /* vertically center the content inside each card */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ---------- GamePage layout ---------- */
+
+.game-page {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(260px, 1.3fr);
+  grid-template-areas:
+    "header  header"
+    "find    players"
+    "upload  leaderboard"
+    "skip    leaderboard";
+  column-gap: 1.2rem;
+  row-gap: 0.7rem;
+}
+
+/* stone-textured header bar */
+.game-page > header {
+  grid-area: header;
+  padding: 1.6rem 1.8rem;
+  border-radius: 20px;
+
+  background:
+    url("/gold-border.png") center / cover no-repeat, url("/blackstone-banner-texture.jpg") center / cover,
+    linear-gradient(135deg, rgba(20, 20, 24, 0.86), rgba(10, 10, 12, 0.88));
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: var(--shadow-strong);
+  backdrop-filter: blur(16px);
+}
+
+.game-page > header h1 {
+  margin-bottom: 0.35rem;
+}
+
+.game-page > header p {
+  font-size: 1.05rem;          
+  color: var(--text-main);         /* brighter text */
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
+  margin: 0.25rem 0;
+}
+
+/* specifically target the second <p> in the header:
+   "Status: Round in progress — time: …" */
+.game-page > header p:nth-of-type(2) {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* highlight the status/time numbers */
+.game-page > header p:nth-of-type(2) strong {
+  color: var(--accent);
+}
+
+
+/* ------- Target specific cards -------- */
+/* Highlight the "Find" card (light blue emphasis) */
+.game-page > section.card:nth-of-type(1) {
+  background: linear-gradient(135deg, rgba(2, 54, 82, 0.5), rgba(4, 128, 156, 0.5));
+  border-color: rgba(5, 146, 235, 0.964);
+  border-width: 2px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+/* Highlight the "Upload" card */
+.game-page > section.card:nth-of-type(2) {
+  background: linear-gradient(135deg, rgba(2, 82, 6, 0.5), rgba(4, 156, 12, 0.5));
+  border-color: rgba(3, 182, 36, 0.872);
+  border-width: 2px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+/* Highlight the "Skip" card */
+.game-page > section.card:nth-of-type(3) {
+  background: linear-gradient(135deg, rgba(100, 3, 3, 0.7), rgba(127, 37, 7, 0.512));
+  border-color: rgba(202, 5, 5, 0.851);
+  border-width: 2px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+/* Highlight the "Online Players" card */
+.game-page > section.card:nth-of-type(4) {
+  background: linear-gradient(135deg, rgba(7, 7, 7, 0.7), rgba(7, 7, 7, 0.7));
+  border-color: rgba(25, 25, 25, 0.851);
+  border-width: 2px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+/* Highlight the "Leaderboard" card */
+.game-page > section.card:nth-of-type(5) {
+  background: linear-gradient(135deg, rgba(7, 7, 7, 0.7), rgba(7, 7, 7, 0.7));
+  border-color: rgba(25, 25, 25, 0.851);
+  border-width: 2px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+}
+
+
+.game-page > section.card:nth-of-type(1) h2 {
+  color: #dff3ff;
+}
+
+.game-page > section.card:nth-of-type(1) .hint {
+  color: #e8f7ff;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
+
+.game-page .winner {
+  margin-top: 0.6rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.95rem;
+}
+
+/* ---------- place the cards ---------- */
+
+.game-page > section.card:nth-of-type(1) { grid-area: find; }
+.game-page > section.card:nth-of-type(2) { grid-area: upload; }
+.game-page > section.card:nth-of-type(3) { grid-area: skip; }
+.game-page > section.card:nth-of-type(4) { grid-area: players; }
+.game-page > section.card:nth-of-type(5) { grid-area: leaderboard; }
+
+/* If you later merge Upload + Skip into one JSX card,
+   just remove the “skip” area and this nth-of-type(3) rule. */
+
+/* --- per-card details --- */
+
+.game-page .hint {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* upload form inside its card */
+.upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+/* skip text */
+.game-page .skip-info {
+  margin-top: 0.35rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* players list */
+.game-page section.card:nth-of-type(4) ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.95rem;
+}
+
+/* leaderboard list */
+.game-page section.card:nth-of-type(5) {
+  max-height: 320px;
+  overflow: hidden;
+}
+
+.game-page section.card:nth-of-type(5) ol {
+  margin: 0.3rem 0 0;
+  padding-left: 1.4rem;
+  max-height: 260px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+}
+
+/* ---------- LoginPage styling ---------- */
+
+.login-page {
+  max-width: 420px;
+  margin: 3.2rem auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-page h1 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+  grid-area: header;
+  padding: 1.6rem 1.8rem;
+  border-radius: 20px;
+
+  background:
+    url("/gold-border.png") center / cover no-repeat, url("/blackstone-banner-texture.jpg") center / cover,
+    linear-gradient(135deg, rgba(20, 20, 24, 0.86), rgba(10, 10, 12, 0.88));
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: var(--shadow-strong);
+  backdrop-filter: blur(16px);
+}
+
+.login-page form.card {
+  width: 100%;
+}
+
+.login-page form.card label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.95rem;
+}
+
+/* inputs */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(5, 5, 7, 0.92);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(245, 192, 107, 0.5);
+}
+
+.login-page .error {
+  margin-top: 0.2rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.88rem;
+  color: var(--danger);
+}
+
+.login-page button[type="submit"] {
+  width: 100%;
+}
+
+/* ---------- Responsive tweaks ---------- */
+
+@media (max-width: 900px) {
+  .page {
+    max-width: 92%;
   }
-  a:hover {
-    color: #747bff;
+
+  .game-page {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "find"
+      "upload"
+      "skip"
+      "players"
+      "leaderboard";
   }
-  button {
-    background-color: #f9f9f9;
+}
+
+@media (max-width: 600px) {
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.05rem; }
+}
+
+/* =========================================================
+   ANIMATIONS + MICRO-INTERACTIONS
+   (Paste this at the bottom of index.css)
+   ========================================================= */
+
+/* 1) Slow drifting background for extra depth */
+@keyframes bg-pan {
+  0% {
+    background-position: center top;
   }
+  100% {
+    background-position: center 30%;
+  }
+}
+
+body {
+  /* very slow, gentle drift */
+  animation: bg-pan 60s ease-in-out infinite alternate;
+}
+
+/* 2) Shared "fade up" entrance for cards & headers */
+@keyframes card-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* default animation + hover micro-interaction for all cards */
+.card {
+  opacity: 0;
+  animation: card-fade-up 0.6s ease forwards;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* subtle lift on hover to make glass feel interactive */
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75);
+}
+
+/* Header + login title also fade up */
+.game-page > header,
+.login-page h1,
+.login-page form.card {
+  opacity: 0;
+  animation: card-fade-up 0.6s ease forwards;
+}
+
+/* Staggered delays so the grid feels like it "builds in" */
+
+/* top header first */
+.game-page > header {
+  animation-delay: 0.02s;
+}
+
+/* game cards in order */
+.game-page > section.card:nth-of-type(1) { animation-delay: 0.08s; }
+.game-page > section.card:nth-of-type(2) { animation-delay: 0.12s; }
+.game-page > section.card:nth-of-type(3) { animation-delay: 0.16s; }
+.game-page > section.card:nth-of-type(4) { animation-delay: 0.20s; }
+.game-page > section.card:nth-of-type(5) { animation-delay: 0.24s; }
+
+/* login elements */
+.login-page h1 {
+  animation-delay: 0.04s;
+}
+.login-page form.card {
+  animation-delay: 0.12s;
+}
+
+/* 3) "Breathing" status pill in the header */
+@keyframes status-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(245, 192, 107, 0.45);
+  }
+  50% {
+    transform: scale(1.12); /* noticeably larger */
+    box-shadow: 0 0 26px 10px rgba(245, 192, 107, 0.55);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(245, 192, 107, 0);
+  }
+}
+
+/* This targets: "Status: Round in progress — time: …" */
+.game-page > header p:nth-of-type(2) {
+  animation: status-pulse 2.8s ease-in-out infinite;
+}
+
+/* 4) Winner pill pop-in (when someone wins a round) */
+@keyframes winner-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* extra) Winner message: pop + green glow + pulse */
+.game-page .winner {
+  animation:
+    winner-pop 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) forwards,
+    winner-glow 2.4s ease-in-out 0.45s 2; /* glow after pop */
+  border: 2px solid rgba(50, 255, 120, 0.65);
+  box-shadow: 0 0 22px rgba(50, 255, 120, 0.45);
+}
+@keyframes winner-glow {
+  0% {
+    box-shadow: 0 0 0px rgba(50, 255, 120, 0.35);
+    border-color: rgba(50, 255, 120, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 26px rgba(50, 255, 120, 0.95);
+    border-color: rgba(50, 255, 120, 0.95);
+  }
+  100% {
+    box-shadow: 0 0 0px rgba(50, 255, 120, 0.35);
+    border-color: rgba(50, 255, 120, 0.35);
+  }
+}
+
+/* 5) Slight attention-grab for the Upload + Skip buttons on hover */
+@keyframes button-breathe {
+  0% {
+    transform: translateY(-1px) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    transform: translateY(-1px) scale(1);
+  }
+}
+
+/* Only apply this to the main game buttons so it's not overused */
+.game-page section.card:nth-of-type(2) button:hover,
+.game-page section.card:nth-of-type(3) button:hover {
+  animation: button-breathe 0.4s ease-out;
 }

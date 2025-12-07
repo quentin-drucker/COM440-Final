@@ -41,13 +41,23 @@ function UploadForm({ username, targetLabel, roundKey }) {
           "This round already finished — wait for the next item!"
         );
       } else if (data.matched) {
-        // This client was the winner (server sends winner + time)
-        const sec = data.durationMs
-          ? (data.durationMs / 1000).toFixed(2)
-          : "?";
-        setMessage(`Correct! You won this round in ${sec}s 🎉`);
-      } else {
-        setMessage("Not quite... try another photo.");
+      // This client was the winner (server sends winner + time & confidence)
+      const sec = data.durationMs
+        ? (data.durationMs / 1000).toFixed(2)
+        : "?";
+
+      const confidence =
+        typeof data.confidence === "number"
+          ? (data.confidence * 100).toFixed(1)
+          : null;
+
+      const confidenceText = confidence
+        ? ` Your photo was assessed to be correct with ${confidence}% Azure Vision confidence.`
+        : "";
+
+      setMessage(
+        `Correct! You won this round in ${sec}s 🎉${confidenceText}`
+        );
       }
     } catch (err) {
       console.error(err);

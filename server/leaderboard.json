@@ -1,7 +1,7 @@
 [
   {
     "username": "quentin",
-    "score": 22
+    "score": 34
   },
   {
     "username": "definitely_not_quentin",
@@ -25,6 +25,14 @@
   },
   {
     "username": "fake_quentin",
+    "score": 1
+  },
+  {
+    "username": "the_quentin",
+    "score": 1
+  },
+  {
+    "username": "q",
     "score": 1
   }
 ]

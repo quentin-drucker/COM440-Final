@@ -167,7 +167,10 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
       });
     }
 
-    const isCorrect = await checkImageWithAzure(imagePath, targetLabel);
+    const { isCorrect, confidence } = await checkImageWithAzure(
+      imagePath,
+      targetLabel
+    );
 
     // delete uploaded file immediately after analysis
     fs.unlink(imagePath, (err) => {
@@ -210,6 +213,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
       success: true,
       matched: true,
       winner: username,
+      confidence, //send CV confidence info to client
       durationMs
     });
   } catch (err) {
@@ -275,7 +279,10 @@ async function checkImageWithAzure(imagePath, targetLabel) {
 
   console.log("Matched target?", !!match, "for label", targetLabel);
 
-  return !!match;
+  return {
+  isCorrect: !!match,
+  confidence: match ? match.confidence : 0
+};
 }
 
 
