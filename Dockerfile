@@ -1,0 +1,31 @@
+# Use a lightweight Node image
+FROM node:20-alpine
+
+# Create app directory
+WORKDIR /app
+
+# Copy package manifests first (better caching)
+COPY server/package*.json server/
+COPY client/package*.json client/
+
+# Install dependencies
+RUN cd server && npm install
+RUN cd client && npm install
+
+# Copy the rest of the source code
+COPY server server/
+COPY client client/
+
+# Build the React client
+RUN cd client && npm run build
+
+# Environment
+ENV NODE_ENV=production
+ENV PORT=4000
+
+# Expose the port the app listens on
+EXPOSE 4000
+
+# Start the server
+CMD ["node", "server/index.js"]
+

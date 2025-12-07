@@ -285,7 +285,6 @@ async function checkImageWithAzure(imagePath, targetLabel) {
 };
 }
 
-
 // ----- Socket.io -----
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
