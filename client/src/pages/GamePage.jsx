@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import UploadForm from "../components/UploadForm.jsx";
+// no URL -> connect to same origin (whatever host the page came from)
+const socket = io();
 
-const socket = io("http://localhost:4000");
 
 function GamePage({ user }) {
   const [currentItem, setCurrentItem] = useState(null);
@@ -18,8 +19,8 @@ function GamePage({ user }) {
 
   async function fetchInitialData() {
     const [itemRes, boardRes] = await Promise.all([
-      fetch("http://localhost:4000/api/current-item"),
-      fetch("http://localhost:4000/api/leaderboard")
+      fetch("/api/current-item"),
+      fetch("/api/leaderboard")
     ]);
 
     const itemData = await itemRes.json();

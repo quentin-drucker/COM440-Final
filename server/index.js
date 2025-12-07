@@ -24,6 +24,11 @@ const PORT = process.env.PORT || 4000;
 // ----- Middleware -----
 app.use(cors());
 app.use(express.json());
+// ----------------------------
+// Serve the React build folder
+// ----------------------------
+const clientBuildPath = path.join(__dirname, "../client/dist");
+app.use(express.static(clientBuildPath));
 
 // ----- Leaderboard helpers -----
 const LEADERBOARD_PATH = path.join(__dirname, "leaderboard.json");
@@ -332,6 +337,17 @@ io.on("connection", (socket) => {
     onlineUsers.delete(socket.id);
     broadcastOnlineUsers();
   });
+});
+
+// -------------------------------------------------------
+// Fallback: send React's index.html for any unknown route
+// -------------------------------------------------------
+app.get("*", (req, res) => {
+  // don't break your API routes
+  if (req.path.startsWith("/api")) {
+    return res.status(404).end();
+  }
+  res.sendFile(path.join(clientBuildPath, "index.html"));
 });
 
 server.listen(PORT, "0.0.0.0", () => {

@@ -29,7 +29,7 @@ function UploadForm({ username, targetLabel, roundKey }) {
     formData.append("targetLabel", targetLabel);
 
     try {
-      const res = await fetch("http://localhost:4000/api/upload", {
+      const res = await fetch("/api/upload", {
         method: "POST",
         body: formData
       });
