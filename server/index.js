@@ -188,7 +188,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
         success: true,
         matched: false,
         confidence,
-        message: `Not quite - that doesn't look like ${targetLabel}.`
+        message: `Not quite right - try a different photo, or angle of it. Azure AI Vision's isn't confident that your uploaded item matches ${targetLabel}.`
       });
     }
 
