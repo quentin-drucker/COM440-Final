@@ -58,7 +58,14 @@ function UploadForm({ username, targetLabel, roundKey }) {
       setMessage(
         `Correct! You won this round in ${sec}s 🎉${confidenceText}`
         );
+        } else {
+        // ❌ Incorrect guess (matched === false and no special reason)
+        setMessage(
+          data.message ||
+            "Not quite right - try a different photo or angle of the item."
+        );
       }
+  
     } catch (err) {
       console.error(err);
       setMessage("Upload failed, please try again.");

@@ -184,7 +184,12 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
 
     // if incorrect guess, round still going
     if (!isCorrect) {
-      return res.json({ success: true, matched: false });
+      return res.json({
+        success: true,
+        matched: false,
+        confidence,
+        message: `Not quite - that doesn't look like ${targetLabel}.`
+      });
     }
 
     // If we reach here, we got a correct answer while roundActive === true.
