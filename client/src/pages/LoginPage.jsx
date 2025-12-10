@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 
 function LoginPage({ onLogin }) {
+  // Local form state for username, password, and error feedback.
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  // Handles submission of login credentials.
+  // Calls the server's /api/login endpoint and, on success,
+  // hands the authenticated username back to the parent (App).
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
@@ -16,16 +20,19 @@ function LoginPage({ onLogin }) {
         body: JSON.stringify({ username, password })
       });
 
+      // Server rejects invalid credentials with a non-OK status.
       if (!res.ok) {
         setError("Login failed");
         return;
       }
 
+      // Extract the username echoed back from the server
+      // and notify the parent component that login succeeded.
       const data = await res.json();
       onLogin(data.username);
     } catch (err) {
       console.error(err);
-      setError("Network error");
+      setError("Network error"); // covers connection/server issues
     }
   }
 
@@ -36,6 +43,7 @@ function LoginPage({ onLogin }) {
         <label>
           Username
           <input
+            type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required

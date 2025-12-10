@@ -1,4 +1,7 @@
 // server/index.js
+
+// Core dependencies for HTTP server, REST API, websockets, file handling, and Azure Vision calls
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -9,40 +12,48 @@ const path = require("path");
 const multer = require("multer");
 const fetch = require("node-fetch");
 
+// Local module with the scavenger item pool and random selection helper
 const { ITEMS, getRandomItem } = require("./items");
 
+// Load environment variables from .env (port, app password, Azure Vision settings, etc.)
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: { origin: "*" } // allow any origin (clients connect from browser / VM IP)
 });
 
 const PORT = process.env.PORT || 4000;
 
 // ----- Middleware -----
-app.use(cors());
-app.use(express.json());
+app.use(cors());            // enable CORS for all routes
+app.use(express.json());    // parse JSON bodies on incoming requests
+
 // ----------------------------
 // Serve the React build folder
 // ----------------------------
+// In production, the built React app lives in client/dist and is served as static assets.
 const clientBuildPath = path.join(__dirname, "../client/dist");
 app.use(express.static(clientBuildPath));
 
 // ----- Leaderboard helpers -----
 const LEADERBOARD_PATH = path.join(__dirname, "leaderboard.json");
 
+// Read leaderboard from disk; returns empty array if file does not exist yet.
 function readLeaderboard() {
   if (!fs.existsSync(LEADERBOARD_PATH)) return [];
   const raw = fs.readFileSync(LEADERBOARD_PATH, "utf-8");
   return raw ? JSON.parse(raw) : [];
 }
 
+// Persist the current leaderboard array to disk.
 function writeLeaderboard(data) {
   fs.writeFileSync(LEADERBOARD_PATH, JSON.stringify(data, null, 2));
 }
 
+// Increment a user's score and return the updated leaderboard.
+// Creates a new entry if the username has not been seen before.
 function incrementScore(username) {
   const board = readLeaderboard();
   let entry = board.find((u) => u.username === username);
@@ -55,19 +66,23 @@ function incrementScore(username) {
   return board;
 }
 
-// current scavenger target + round state
+// Current scavenger target + round state
 let currentItem = null;
 let currentRoundId = 0;
 let roundStartTime = null; // ms timestamp
 let roundActive = false;
 
-// track which users are currently online (socket.id -> username)
+// Track which users are currently online (socket.id -> username)
 const onlineUsers = new Map();
 
-// users who have voted to skip the current item (by username)
+// Usernames who have voted to skip the current item
 const skipVotes = new Set();
 
+
 let lastOnlineCount = 0;
+
+// Broadcasts current online user list and skip status to all clients.
+// Also handles "timer reset" behavior when the first player joins.
 function broadcastOnlineUsers() {
   const users = Array.from(new Set(onlineUsers.values()));
   io.emit("onlineUsers", users);
@@ -78,7 +93,9 @@ function broadcastOnlineUsers() {
     });
 
   const newCount = users.length;
-  // Timer reset logic   (If we just went from 0 players online -> at least 1 player online, reset the round's start time so the timer effectively "starts" when someone is actually here.)
+  // Timer reset logic:
+  // If the online count transitions from 0 -> >0, reset the round's start time
+  // so the timer effectively starts when at least one player is present.
   if (lastOnlineCount === 0 && newCount > 0) {
     if (roundActive) {
       roundStartTime = Date.now();
@@ -90,7 +107,10 @@ function broadcastOnlineUsers() {
 }
 
 
-
+// Starts a new round:
+// - Picks a random item
+// - Resets round state and skip votes
+// - Broadcasts "roundStarted" and updated skip status to all clients
 function startNewRound() {
   currentItem = getRandomItem();
   currentRoundId += 1;
@@ -98,7 +118,7 @@ function startNewRound() {
   roundActive = true;
   skipVotes.clear(); // reset skip votes for the new item
 
-  // reset the skip status for all clients
+  // Reset the skip status for all clients
   const users = Array.from(new Set(onlineUsers.values()));
   io.emit("skipStatus", {
     votes: skipVotes.size, // 0 after clear()
@@ -118,7 +138,8 @@ function startNewRound() {
 
 // ----- Routes -----
 
-// Simple password login
+// Simple password login endpoint.
+// Verifies shared app password and echoes back the username if valid.
 app.post("/api/login", (req, res) => {
   const { username, password } = req.body;
 
@@ -129,6 +150,7 @@ app.post("/api/login", (req, res) => {
   res.json({ username });
 });
 
+// Expose current round information so new clients can sync state on page load.
 app.get("/api/current-item", (req, res) => {
   res.json({
     item: currentItem,
@@ -138,7 +160,7 @@ app.get("/api/current-item", (req, res) => {
   });
 });
 
-
+// Return the current leaderboard sorted by score (highest first).
 app.get("/api/leaderboard", (req, res) => {
   const board = readLeaderboard();
   board.sort((a, b) => b.score - a.score);
@@ -146,11 +168,13 @@ app.get("/api/leaderboard", (req, res) => {
 });
 
 // ----- File upload (images) -----
+// Multer temp upload directory for incoming photos.
 const upload = multer({
   dest: path.join(__dirname, "uploads")
 });
 
-// This will later call Azure Vision resource (to check user's uploaded image of current item)
+// Main upload route:
+// Receives the user's photo, sends it to Azure Vision, and resolves whether it matches the target item.
 app.post("/api/upload", upload.single("image"), async (req, res) => {
   try {
     const username = req.body.username;
@@ -163,7 +187,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
       currentRoundId
     });
 
-    // If round is not active, don't let anyone win
+    // If round is not active, ignore the upload for scoring purposes.
     if (!roundActive) {
       return res.json({
         success: true,
@@ -172,17 +196,18 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
       });
     }
 
+    // Analyze the uploaded image with Azure Vision
     const { isCorrect, confidence } = await checkImageWithAzure(
       imagePath,
       targetLabel
     );
 
-    // delete uploaded file immediately after analysis
+    // Delete uploaded file immediately after analysis (cleanup)
     fs.unlink(imagePath, (err) => {
-      if (err) console.error("⚠️ Failed to delete uploaded file:", err);
+      if (err) console.error("Failed to delete uploaded file:", err);
     });
 
-    // if incorrect guess, round still going
+    // If incorrect guess, keep the round running and send feedback.
     if (!isCorrect) {
       return res.json({
         success: true,
@@ -192,18 +217,18 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
       });
     }
 
-    // If we reach here, we got a correct answer while roundActive === true.
-    // This player wins the round.
+    // If correct and round is still active, this player wins.    
     roundActive = false;
     const endTime = Date.now();
     const durationMs = endTime - roundStartTime;
 
+    // Update leaderboard and broadcast new scores.
     const board = incrementScore(username);
 
     // Update all clients' leaderboard
     io.emit("leaderboardUpdated", board);
 
-    // Announce the winner of this round
+    // Announce the winner and round results to all connected clients.
     io.emit("roundEnded", {
       winner: username,
       item: currentItem,
@@ -212,18 +237,19 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
       roundId: currentRoundId
     });
 
-    // Start a new round after a short intermission (10 seconds)
+    // Start a new round after a short intermission (~10 seconds),
+    // giving players time to see who won and what the item was.
     setTimeout(() => {
       console.log("10s intermission over, starting new round");
       startNewRound();
     }, 10000); // 10,000 ms = 10 sec
 
-
+    // Response back to the winner who triggered this upload.
     return res.json({
       success: true,
       matched: true,
       winner: username,
-      confidence, //send CV confidence info to client
+      confidence, //send Azure AI Vision (CV) confidence info to client
       durationMs
     });
   } catch (err) {
@@ -232,7 +258,8 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
   }
 });
 
-
+// Call Azure Computer Vision's "analyze" endpoint with Tags to detect objects in the image.
+// Returns { isCorrect, confidence } based on fuzzy matching against targetLabel.
 async function checkImageWithAzure(imagePath, targetLabel) {
   const endpoint = (process.env.AZURE_VISION_ENDPOINT || "").replace(/\/+$/, "");
   const key = process.env.AZURE_VISION_KEY;
@@ -242,7 +269,7 @@ async function checkImageWithAzure(imagePath, targetLabel) {
     return false;
   }
 
-  // Using Computer Vision v3.2 "analyze" endpoint with Tags
+  // Using Computer Vision "analyze" endpoint with Tags
   const url = `${endpoint}/vision/v3.2/analyze?visualFeatures=Tags`;
 
   const imageData = fs.readFileSync(imagePath);
@@ -275,12 +302,14 @@ async function checkImageWithAzure(imagePath, targetLabel) {
 
   console.log("Azure Vision tags:", data.tags);
 
-  // simple fuzzy match: exact or substring, with a confidence threshold
+  // Simple "fuzzy" match:
+  // - Minimum confidence threshold (0.6)
+  // - Tag name and target label can match exactly or via substring in either direction.
   const match = data.tags.find((tag) => {
     const name = tag.name.toLowerCase();
     const conf = tag.confidence;
     return (
-      conf >= 0.6 && // can tweak this
+      conf >= 0.6 && // (can tweak this but this value seems forgiving and works for now)
       (name === lowerTarget ||
         name.includes(lowerTarget) ||
         lowerTarget.includes(name))
@@ -296,47 +325,50 @@ async function checkImageWithAzure(imagePath, targetLabel) {
 }
 
 // ----- Socket.io -----
+// Real-time connection handler for each browser client.
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
-  // Client tells us which username this socket belongs to
+  // Client tells the server which username this socket belongs to.
   socket.on("registerUser", (username) => {
     onlineUsers.set(socket.id, username);
     broadcastOnlineUsers();
   });
 
+  // Handle a user's vote to skip the current item.
   socket.on("voteSkip", () => {
     const username = onlineUsers.get(socket.id);
     if (!username) return;
 
-    // track that this user voted to skip
+    // Track that this user voted to skip (one vote per username).
     skipVotes.add(username);
 
     const users = Array.from(new Set(onlineUsers.values()));
     const votes = skipVotes.size;
     const needed = users.length;
 
-    // broadcast updated skip progress to everyone
+    // Broadcast updated skip progress to everyone.
     io.emit("skipStatus", { votes, needed });
 
-    // if everyone online has voted to skip, and round is active, skip the item
+    // If all online users have voted to skip and the round is active, skip the item.
     if (roundActive && needed > 0 && votes >= needed) {
       console.log("All players voted to skip, starting new round");
       roundActive = false;
 
-      // announce the skip, as a brief status message
+      // Announce the skip, as a brief status message.
       io.emit("roundSkipped", {
         item: currentItem,
         roundId: currentRoundId
       });
 
-      // Give clients ~3 seconds to read "Item skipped..." before new round
+      // Give clients ~3 seconds to read "Item skipped..." before new round starts.
       setTimeout(() => {
         startNewRound();
       }, 3000);
     }
   });
 
+  // Clean up user mapping on disconnect and update everyone with the new online list.
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
     onlineUsers.delete(socket.id);
@@ -348,13 +380,14 @@ io.on("connection", (socket) => {
 // Fallback: send React's index.html for any unknown route
 // -------------------------------------------------------
 app.get("*", (req, res) => {
-  // don't break your API routes
+  // Don't override API endpoints with the React app.
   if (req.path.startsWith("/api")) {
     return res.status(404).end();
   }
   res.sendFile(path.join(clientBuildPath, "index.html"));
 });
 
+// Start the HTTP + Socket.io server and immediately start the first round.
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server listening on port ${PORT}`);
   startNewRound(); // start the first round when server boots

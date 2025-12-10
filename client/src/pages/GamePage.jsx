@@ -1,22 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import UploadForm from "../components/UploadForm.jsx";
-// no URL -> connect to same origin (whatever host the page came from)
+
+// Create a Socket.io client using the same origin the app was served from.
 const socket = io();
 
 
 function GamePage({ user }) {
+  // Current scavenger item (label + hint) for the active round.
   const [currentItem, setCurrentItem] = useState(null);
+  // Current leaderboard array from the server.  
   const [leaderboard, setLeaderboard] = useState([]);
+  // Start timestamp (ms) of the current round; used to compute live timer.  
   const [roundStartTime, setRoundStartTime] = useState(null);
+  // Information about the last completed round (winner, item, duration).  
   const [winnerInfo, setWinnerInfo] = useState(null);
+  // Timer value in seconds for the current round.  
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // High-level round description shown in the header ("Round in progress", "Brief Intermission", etc.).  
   const [roundStatus, setRoundStatus] = useState("Loading round...");
+  // Indicates whether a round is currently active (accepting submissions).  
   const [roundActive, setRoundActive] = useState(false);
+  // Key that changes every round so UploadForm can reset its internal state.  
   const [roundKey, setRoundKey] = useState(0); // used to reset UploadForm each round
+  // List of usernames currently online (from Socket.io).  
   const [onlineUsers, setOnlineUsers] = useState([]);
+  // Skip vote status: how many votes vs how many players are needed to skip.  
   const [skipStatus, setSkipStatus] = useState({ votes: 0, needed: 0 });
 
+  // Fetch initial game state when the component first mounts:
+  // - current round info (item, start time, active flag, roundId)
+  // - current leaderboard
   async function fetchInitialData() {
     const [itemRes, boardRes] = await Promise.all([
       fetch("/api/current-item"),
@@ -30,29 +44,36 @@ function GamePage({ user }) {
 
     setRoundActive(itemData.active);
     setRoundStatus(itemData.active ? "Round in progress" : "Brief Intermission");
+    // Use roundId from server, fallback to 1 if missing.
     setRoundKey(itemData.roundId || 1);
   }
 
+  // Emit a skip vote to the server for the current item.
+  // Only allowed if the round is actually active.
   function handleSkipClick() {
-    // Only allow skip votes while the round is active
     if (!roundActive) return;
     socket.emit("voteSkip");
   }
 
-
+  // Main Socket.io + initial data effect.
+  // Runs once on mount and registers all event handlers.
   useEffect(() => {
     fetchInitialData();
 
+    // Immediately register this user's name with the server for presence / skip voting.
     socket.emit("registerUser", user);
     
+    // Receive online user list updates from the server.
     socket.on("onlineUsers", (users) => {
       setOnlineUsers(users);
     });
 
+    // Receive leaderboard changes whenever someone wins.
     socket.on("leaderboardUpdated", (board) => {
       setLeaderboard(board);
     });
 
+    // Server announces a fresh round (new item, timer reset).
     socket.on("roundStarted", (payload) => {
       setCurrentItem(payload.item);
       setRoundStartTime(payload.startedAt);
@@ -60,9 +81,11 @@ function GamePage({ user }) {
       setElapsedSeconds(0);
       setRoundActive(true);
       setRoundStatus("Round in progress");
-      setRoundKey(payload.roundId); // IMPORTANT for resetting UploadForm
+      // Changing this key forces UploadForm to reset for the new round.
+      setRoundKey(payload.roundId);
     });
 
+    // Server announces that the round has ended and who won.
     socket.on("roundEnded", (payload) => {
       setWinnerInfo({
         winner: payload.winner,
@@ -70,9 +93,9 @@ function GamePage({ user }) {
         durationMs: payload.durationMs
       });
       setLeaderboard(payload.leaderboard);
-      setRoundActive(false); // round is no longer running
+      setRoundActive(false); // round is over, no more submissions counted
 
-      // freeze timer at the winning time
+      // Freeze the timer at the winning time.
       if (payload.durationMs) {
         setElapsedSeconds(payload.durationMs / 1000);
       }
@@ -80,19 +103,19 @@ function GamePage({ user }) {
       setRoundStatus("Brief Intermission");
     });
 
+    // Server updates skip voting progress (votes vs needed).
     socket.on("skipStatus", (status) => {
       setSkipStatus(status);
     });
 
+    // Server announces that everyone skipped the item; new round will follow.
     socket.on("roundSkipped", (payload) => {
-      // This round is no longer running
       setRoundActive(false);
-
-      // Briefly show that the item was skipped, new round will be announced by 'roundStarted' right after.
       setWinnerInfo(null);
       setRoundStatus("Item skipped by all players");
     });
     
+    // Cleanup all listeners on unmount to avoid duplicate handlers.
     return () => {
       socket.off("leaderboardUpdated");
       socket.off("roundStarted");
@@ -103,7 +126,9 @@ function GamePage({ user }) {
     };
   }, []);
 
-  // simple timer that updates based on roundStartTime
+  // Live timer effect:
+  // As long as the round is active and there is a start time,
+  // update elapsedSeconds every 200ms.
   useEffect(() => {
     if (!roundStartTime || !roundActive) return;
 

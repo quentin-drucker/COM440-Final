@@ -1,20 +1,24 @@
-/* ---------- Theme variables ---------- */
+/* ===========================================
+   THEME VARIABLES - global colors, shadows, radii
+   =========================================== */
 
 :root {
-  --card-bg: rgba(5, 5, 7, 0.25);      /* low-opacity dark glass */
-  --card-border: rgba(255, 255, 255, 0.14);
-  --accent: #f5c06b;
-  --accent-soft: rgba(245, 192, 107, 0.18);
+  --card-bg: rgba(5, 5, 7, 0.25);      /* frosted glass look */
+  --card-border: rgba(255, 255, 255, 0.14); /* subtle white edge for cards */
+  --accent: #f5c06b;                        /* gold highlight color */
+  --accent-soft: rgba(245, 192, 107, 0.18); /* soft glow for highlight areas */
   --text-main: #f5f5f5;
   --text-muted: #a9a9b2;
   --danger: #ff6b6b;
   --radius-lg: 18px;
   --radius-sm: 10px;
-  --shadow-strong: 0 22px 45px rgba(0, 0, 0, 0.8);
-  --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.6);
+  --shadow-strong: 0 22px 45px rgba(0, 0, 0, 0.8);  /* deep, dramatic header shadow */
+  --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.6);    /* general-purpose soft shadow */
 }
 
-/* ---------- Global + background ---------- */
+/* ===========================================
+   GLOBAL RESET + BACKGROUND
+   =========================================== */
 
 html,
 body {
@@ -28,22 +32,25 @@ body {
     "Segoe UI", sans-serif;
   font-size: 16px;
 
-  /* main background image – update filename if needed */
+  /* site-wide aesthetic: dark world with textured background */
   background:
     url("/background-environment.jpg") center / cover fixed no-repeat,
     rgba(0, 0, 0, 0.8);
-  background-color: #020203; /* no white edges ever */
+  background-color: #020203;
 
   color: var(--text-main);
 }
 
+/* center root layout */
 #root {
   min-height: 100vh;
   display: flex;
   justify-content: center;
 }
 
-/* ---------- Page wrapper ---------- */
+/* ===========================================
+   PAGE WRAPPERS + TYPOGRAPHY
+   =========================================== */
 
 .page {
   box-sizing: border-box;
@@ -52,7 +59,6 @@ body {
   margin: 1.8rem auto;
 }
 
-/* ---------- Typography ---------- */
 
 h1,
 h2 {
@@ -78,11 +84,13 @@ strong {
   font-weight: 600;
 }
 
-/* ---------- Buttons ---------- */
+/* ===========================================
+   BUTTONS - shared UI styling
+   =========================================== */
 
 button {
   cursor: pointer;
-  border-radius: 999px;
+  border-radius: 999px;             /* pill shape */
   padding: 0.55rem 1.3rem;
   border: 1px solid rgba(255, 255, 255, 0.18);
   font-size: 0.95rem;
@@ -106,60 +114,55 @@ button:active {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
 }
 
-/* ---------- GamePage Button Overrides (Submit + Skip) ---------- */
 
-/* Upload Photo → green */
-.game-page section.card:nth-of-type(2) button {
+/* Upload button (green) and Skip button (red) override
+   - scoped by nth-of-type in the GamePage card layout */
+.game-page section.card:nth-of-type(2) button {             /* Upload Button - Green */
   background: linear-gradient(135deg, #4be37f, #2fb85d);
   color: #0c1a10;
   border-color: rgba(255, 255, 255, 0.25);
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.45);
 }
-
 .game-page section.card:nth-of-type(2) button:hover {
   filter: brightness(1.05);
   transform: translateY(-1px);
 }
-
 .game-page section.card:nth-of-type(2) button:active {
   transform: translateY(1px);
 }
-
-/* Skip Item → red */
-.game-page section.card:nth-of-type(3) button {
+.game-page section.card:nth-of-type(3) button {             /* Skip Button - Red */
   background: linear-gradient(135deg, #ff7474, #d82929);
   color: #2b0000;
   border-color: rgba(255, 255, 255, 0.25);
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.45);
 }
-
 .game-page section.card:nth-of-type(3) button:hover {
   filter: brightness(1.05);
   transform: translateY(-1px);
 }
-
 .game-page section.card:nth-of-type(3) button:active {
   transform: translateY(1px);
 }
 
-/* ---------- Frosted glass cards (no texture) ---------- */
+/* ===========================================
+   CARD STYLE - universal frosted glass panels
+   =========================================== */
 
 .card {
   padding: 0.85rem 1.15rem;
   border-radius: var(--radius-lg);
   border: 1px solid var(--card-border);
   box-shadow: var(--shadow-soft);
-
   background: var(--card-bg);
   backdrop-filter: blur(18px);
-
-  /* vertically center the content inside each card */
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-/* ---------- GamePage layout ---------- */
+/* ===========================================
+   GAMEPAGE GRID LAYOUT
+   =========================================== */
 
 .game-page {
   display: grid;
@@ -173,16 +176,14 @@ button:active {
   row-gap: 0.7rem;
 }
 
-/* stone-textured header bar */
+/* Header bar with stone texture + gold border */
 .game-page > header {
   grid-area: header;
   padding: 1.6rem 1.8rem;
   border-radius: 20px;
-
   background:
     url("/gold-border.png") center / cover no-repeat, url("/blackstone-banner-texture.jpg") center / cover,
     linear-gradient(135deg, rgba(20, 20, 24, 0.86), rgba(10, 10, 12, 0.88));
-
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow: var(--shadow-strong);
   backdrop-filter: blur(16px);
@@ -199,15 +200,13 @@ button:active {
   margin: 0.25rem 0;
 }
 
-/* specifically target the second <p> in the header:
-   "Status: Round in progress — time: …" */
+/* Status pill inside header */
 .game-page > header p:nth-of-type(2) {
   display: inline-block;
   padding: 0.3rem 0.9rem;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.45);
 }
-
 /* highlight the status/time numbers */
 .game-page > header p:nth-of-type(2) strong {
   color: var(--accent);
@@ -222,28 +221,28 @@ button:active {
   border-width: 2px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
 }
-/* Highlight the "Upload" card */
+/* Highlight the "Upload" card (green) */
 .game-page > section.card:nth-of-type(2) {
   background: linear-gradient(135deg, rgba(2, 82, 6, 0.5), rgba(4, 156, 12, 0.5));
   border-color: rgba(3, 182, 36, 0.872);
   border-width: 2px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
 }
-/* Highlight the "Skip" card */
+/* Highlight the "Skip" card (red) */
 .game-page > section.card:nth-of-type(3) {
   background: linear-gradient(135deg, rgba(100, 3, 3, 0.7), rgba(127, 37, 7, 0.512));
   border-color: rgba(202, 5, 5, 0.851);
   border-width: 2px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
 }
-/* Highlight the "Online Players" card */
+/* Highlight the "Online Players" (black) card */
 .game-page > section.card:nth-of-type(4) {
   background: linear-gradient(135deg, rgba(7, 7, 7, 0.7), rgba(7, 7, 7, 0.7));
   border-color: rgba(25, 25, 25, 0.851);
   border-width: 2px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
 }
-/* Highlight the "Leaderboard" card */
+/* Highlight the "Leaderboard" card (black) */
 .game-page > section.card:nth-of-type(5) {
   background: linear-gradient(135deg, rgba(7, 7, 7, 0.7), rgba(7, 7, 7, 0.7));
   border-color: rgba(25, 25, 25, 0.851);
@@ -278,8 +277,6 @@ button:active {
 .game-page > section.card:nth-of-type(4) { grid-area: players; }
 .game-page > section.card:nth-of-type(5) { grid-area: leaderboard; }
 
-/* If you later merge Upload + Skip into one JSX card,
-   just remove the “skip” area and this nth-of-type(3) rule. */
 
 /* --- per-card details --- */
 
@@ -324,7 +321,9 @@ button:active {
   font-size: 0.9rem;
 }
 
-/* ---------- LoginPage styling ---------- */
+/* ===========================================
+   LOGIN PAGE
+   =========================================== */
 
 .login-page {
   max-width: 420px;
@@ -334,7 +333,8 @@ button:active {
   align-items: center;
 }
 
-.login-page h1 {
+/* Login title has same aesthetic as main header */
+.login-page h1 { /* textured gold-bordered title */
   margin-bottom: 1.5rem;
   text-align: center;
   grid-area: header;
@@ -363,7 +363,7 @@ button:active {
   font-size: 0.95rem;
 }
 
-/* inputs */
+/* Login inputs (text + password share same design) */
 input[type="text"],
 input[type="password"],
 input[type="email"],
@@ -373,7 +373,7 @@ input[type="number"] {
   padding: 0.5rem 0.7rem;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(5, 5, 7, 0.92);
+  background: rgb(29, 29, 29);
   color: var(--text-main);
   font-size: 0.95rem;
   outline: none;
@@ -420,10 +420,10 @@ input:focus {
   h2 { font-size: 1.05rem; }
 }
 
-/* =========================================================
-   ANIMATIONS + MICRO-INTERACTIONS
-   (Paste this at the bottom of index.css)
-   ========================================================= */
+/* ===========================================
+   ANIMATIONS (page fade, header pulse, winner pop)
+   =========================================== */
+/* drifting background, card fade-in, winner glow, breathing status pill, etc. */
 
 /* 1) Slow drifting background for extra depth */
 @keyframes bg-pan {
