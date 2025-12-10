@@ -152,7 +152,7 @@ function GamePage({ user }) {
           Status: <strong>{roundStatus}</strong>{" "}
           {roundActive && roundStartTime && (
             <>
-              — time: <strong>{elapsedSeconds.toFixed(1)}s</strong>
+              ─ ⋆⋅☆⋅⋆ ─ time: <strong>{elapsedSeconds.toFixed(1)}s</strong>
             </>
           )}
         </p>

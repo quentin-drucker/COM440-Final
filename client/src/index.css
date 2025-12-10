@@ -221,6 +221,15 @@ button:active {
   border-width: 2px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
 }
+  /*>>> Make the current item (to find) label larger + more prominent */
+.game-page > section.card:nth-of-type(1) p strong {
+  font-size: 1.8rem;         /* increased size */
+  line-height: 1.2;
+  display: block;            /* allows vertical spacing control */
+  margin-bottom: 0.3rem;
+  text-shadow: 0 0 10px rgba(0,0,0,0.45);
+}
+
 /* Highlight the "Upload" card (green) */
 .game-page > section.card:nth-of-type(2) {
   background: linear-gradient(135deg, rgba(2, 82, 6, 0.5), rgba(4, 156, 12, 0.5));
@@ -304,7 +313,7 @@ button:active {
 .game-page section.card:nth-of-type(4) ul {
   margin: 0.3rem 0 0;
   padding-left: 1.2rem;
-  font-size: 0.95rem;
+  font-size: 1.5rem;
 }
 
 /* leaderboard list */
