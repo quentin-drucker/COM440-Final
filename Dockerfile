@@ -1,39 +1,28 @@
-# Use a lightweight Node image
-FROM node:20-alpine
+# Use a Node image to build both the React client and run the Express server
+FROM node:18
 
-# Create app directory
+# Create and set the working directory inside the container
 WORKDIR /app
 
-# -------------------------
-# Install dependencies first (better layer caching)
-# -------------------------
-COPY server/package*.json server/
-COPY client/package*.json client/
+# Copy dependency manifests first for efficient Docker layer caching
+COPY package*.json ./
 
-RUN cd server && npm install
-RUN cd client && npm install
+# Install server dependencies
+RUN npm install
 
-# -------------------------
-# Copy the source code
-# -------------------------
-COPY server server/
-COPY client client/
+# Copy the entire project (both server and client code)
+COPY . .
 
-# -------------------------
-# Build the React client
-# -------------------------
-RUN cd client && npm run build
+# Build the React client so production-ready assets are placed in client/dist
+WORKDIR /app/client
+RUN npm install
+RUN npm run build
 
-# -------------------------
-# Environment
-# -------------------------
-ENV NODE_ENV=production
-ENV PORT=4000
+# Move back to server directory so "node index.js" will run from the backend folder
+WORKDIR /app/server
 
-# Expose the port the app listens on
+# Expose the backend port (Express + Socket.io)
 EXPOSE 4000
 
-# -------------------------
-# Start the server
-# -------------------------
-CMD ["node", "server/index.js"]
+# Default command: start the Node server (serves backend API + built React client)
+CMD ["node", "index.js"]
