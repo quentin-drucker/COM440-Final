@@ -228,14 +228,5 @@ Once deployed, visiting `<VM_PUBLIC_IP>:4000` loads the production client, which
 
 ---
 
-# Future Improvements
-If I extended this project, I would consider adding:
-- A chat sidebar
-- More item sets or themed game modes
-- A lightweight database like SQLite
-- Sound effects + animations
-- Admin controls for custom item sets
----
-
 # Final Notes
-This README is intentionally structured to provide both a quick high-level overview (useful for anyone scanning the repository) and a deeper behind-the-scenes explanation of how the system works from my perspective as the developer. The game runs fully automatically once deployed, with Azure Vision determining correctness and the server orchestrating all player interactions, round transitions, skip voting, leaderboard management, and real-time synchronization.
+This README is intentionally structured to provide both a quick high-level overview as well as a deeper behind-the-scenes explanation of how the system works from my perspective as the developer. The game runs fully automatically once deployed, with Azure Vision determining correctness and the server informing all player interactions, round transitions, skip voting, leaderboard management, and real-time synchronization.
